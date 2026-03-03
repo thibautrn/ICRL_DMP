@@ -1,0 +1,864 @@
+<mujoco model="bimanualrobot">
+  <compiler angle="radian" meshdir="meshes" autolimits="true"/>
+  
+  <option timestep="0.002" iterations="50" solver="Newton" tolerance="1e-10">
+    <flag constraint="enable" limit="enable"/>
+  </option>
+
+  <visual>
+    <headlight ambient="0.5 0.5 0.5" diffuse="0.8 0.8 0.8" specular="0.3 0.3 0.3"/>
+    <global offwidth="1920" offheight="1080"/>
+    <quality shadowsize="4096"/>
+  </visual>
+
+  <asset>
+    <texture name="skybox" 
+                 type="skybox" 
+                 builtin="flat" 
+                 rgb1="1 1 1" 
+                 width="800" 
+                 height="800"/>
+                 
+    <texture name="grid" type="2d" builtin="checker" rgb1=".1 .2 .3" rgb2=".2 .3 .4" width="300" height="300"/>
+    <material name="grid" texture="grid" texrepeat="8 8" reflectance="0.2"/>
+    <texture name="wood_tex"
+            type="2d"
+            builtin="checker"
+            rgb1="0.392 0.6 0.776"
+            rgb2="0.521 0.761 0.964"
+            width="512"
+            height="512"/>
+
+    <material name="wood_mat"
+              texture="wood_tex"
+              texrepeat="10 10"
+              texuniform="false"
+              reflectance="0"/>
+  </asset>
+  
+  <asset>
+    <!-- Visual meshes -->
+    <mesh name="stand" file="visual/stand.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="link_1" file="visual/link_1.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="link_2" file="visual/link_2.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="link_3" file="visual/link_3.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="link_4" file="visual/link_4.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="link_5" file="visual/link_5.stl" scale="0.001 0.001 0.001"/>
+    <mesh name="link_6" file="visual/link_6.stl" scale="0.001 0.001 0.001"/>
+    
+    <!-- Collision meshes -->
+    <mesh name="stand_collision" file="collision/stand.stl"/>
+    <mesh name="link3_collision" file="collision/link3.stl"/>
+    <mesh name="link4_collision" file="collision/link4.stl"/>
+    <mesh name="link6_collision" file="collision/link6.stl"/>
+    
+    <!-- Materials -->
+    <material name="black" rgba="0.0 0.0 0.0 1.0"/>
+    <material name="blue" rgba="0.0 0.0 0.8 1.0"/>
+    <material name="green" rgba="0.0 0.8 0.0 1.0"/>
+    <material name="grey" rgba="0.2 0.2 0.2 1.0"/>
+    <material name="light_grey" rgba="0.7 0.7 0.7 1.0"/>
+    <material name="orange" rgba="1.0 0.4235294117647059 0.0392156862745098 1.0"/>
+    <material name="brown" rgba="0.8705882352941177 0.8117647058823529 0.7647058823529411 1.0"/>
+    <material name="red" rgba="0.8 0.0 0.0 1.0"/>
+    <material name="white" rgba="1.0 1.0 1.0 1.0"/>
+    <material name="wood" rgba="0.8705882352941177 0.8117647058823529 0.7647058823529411 1.0"/>
+  </asset>
+  
+  <default>
+    <joint damping="0.5" armature="0.01" limited="true" stiffness="0" springref="0"/>
+    <geom contype="1" conaffinity="1" friction="0.9 0.005 0.0001" rgba="0.7 0.7 0.7 1"/>
+  </default>
+  
+  <worldbody>
+    <geom name="floor_box"
+        type="box"
+        pos="0 0 -0.005"
+        size="5 5 0.005"
+        material="wood_mat"
+        contype="1"
+        conaffinity="1"/>
+          
+    <!-- Base/Stand -->
+    <body name="base_link" pos="0 0 0">
+      <body name="stand_link" pos="0 0 0">
+        <inertial pos="0 0 0" mass="1000" diaginertia="100 100 100"/>
+        <geom name="stand_collision_geom" type="mesh" mesh="stand_collision" pos="-0.3 -0.3 0" rgba="1 0 0 0.4"/>
+        <geom type="mesh" mesh="stand" quat="0.707107 0.707107 0 0" material="light_grey" contype="0" conaffinity="0"/>
+        
+        <!-- LEFT ARM -->
+        <!-- Origin: pos="0.045 0.1665 1.526" rpy="-1.5707963267948966 -1.5707963267948966 0" -->
+        <!-- RPY to quat: rpy(-π/2, -π/2, 0) = quat(0.5, -0.5, -0.5, -0.5) -->
+        <body name="leftarm_shoulder_link" pos="0.045 0.1665 1.526" quat="0.5 -0.5 -0.5 -0.5">
+          <inertial pos="0.00023 0.00000 0.06223" mass="0.85644" diaginertia="0.00134118504 0.00134118504 0.00041622984"/>
+          <geom type="box" size="0.027 0.027 0.063" pos="0 0 0.063" rgba="1 0 0 0.4" euler="0 0 3.141592653589793"/>
+          <geom type="mesh" mesh="link_1" euler="0 0 3.141592653589793" material="grey" contype="0" conaffinity="0" rgba="0.2 0.2 0.2 1"/>
+          
+          <!-- Joint at xyz="0 0 0.126", axis="0 0 -1" -->
+          <body name="leftarm_upper_arm_link" pos="0 0 0.126">
+            <inertial pos="0.00000 0.00080 0.03183" mass="0.94658" diaginertia="0.00183005466667 0.000567948 0.00183005466667"/>
+            <joint name="leftarm_shoulder_pan_joint" type="hinge" pos="0 0 0" axis="0 0 -1" range="-3.141592653589793 0"/>
+            <geom type="box" size="0.03 0.07 0.03" pos="0 0 0.03" rgba="1 0 0 0.4" euler="0 0 3.141592653589793"/>
+            <geom type="mesh" mesh="link_2" pos="0 0 -0.126" euler="0 0 3.141592653589793" material="grey" contype="0" conaffinity="0" rgba="0.2 0.2 0.2 1"/>
+            
+            <!-- Joint at xyz="0 0 0.033", axis="0 1 0" -->
+            <body name="leftarm_forearm_link" pos="0 0 0.033">
+              <inertial pos="0 0 0.148" mass="1.30260" diaginertia="0.0136625102365 0.0124082569044 0.00324753226791"/>
+              <joint name="leftarm_shoulder_lift_joint" type="hinge" pos="0 0 0" axis="0 1 0" range="-1.7803405567893358 1.7803405567893358"/>
+              <geom type="mesh" mesh="link3_collision" pos="-.001 0 0.148" rgba="1 0 0 0.4" euler="-1.5707963267948966 0 3.141592653589793"/>
+              <geom type="mesh" mesh="link_3" pos="0 0 -0.159" euler="0 0 3.141592653589793" material="grey" contype="0" conaffinity="0" rgba="0.2 0.2 0.2 1"/>
+              
+              <!-- Joint at xyz="0.03 0.0 0.264" rpy="0 0.7853981633974483 0", axis="0 1 0" -->
+              <body name="leftarm_wrist_1_link" pos="0.03 0.0 0.264" euler="0 0.7853981633974483 0">
+                <inertial pos="-0.03 0 0.1285" quat="0.707107 0 0.707107 0" mass="1.15977" diaginertia="0.00205032491251 0.00691847164616 0.00765159473365"/>
+                <joint name="leftarm_elbow_joint" type="hinge" pos="0 0 0" axis="0 1 0" range="-1.2566370614359172 2.261946710584651"/>
+                <geom type="mesh" mesh="link4_collision" pos="-0.03 0.0 0.1285" rgba="1 0 0 0.4" euler="1.5707963267948966 0 3.141592653589793"/>
+                <geom type="mesh" mesh="link_4" pos="-0.03 0 -0.423" euler="0 0 3.141592653589793" material="grey" contype="0" conaffinity="0" rgba="0.2 0.2 0.2 1"/>
+                
+                <!-- Joint at xyz="-0.03 0.0 0.231", axis="0 0 1" -->
+                <body name="leftarm_wrist_2_link" pos="-0.03 0.0 0.231">
+                  <inertial pos="0 0 0.024" mass="0.44688" diaginertia="0.00038744496 0.00017160192 0.00038744496"/>
+                  <joint name="leftarm_wrist_1_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-3.141592653589793 3.141592653589793"/>
+                  <geom type="box" size="0.024 0.045 0.024" pos="0.0 0.0 0.024" rgba="1 0 0 0.4" euler="0 0 3.141592653589793"/>
+                  <geom type="mesh" mesh="link_5" pos="0 0 -0.654" euler="0 0 3.141592653589793" material="grey" contype="0" conaffinity="0" rgba="0.2 0.2 0.2 1"/>
+                  
+                  <!-- Joint at xyz="0.0 0.0 0.027", axis="0 1 0" -->
+                  <body name="leftarm_wrist_3_link" pos="0.0 0.0 0.027">
+                    <inertial pos="0 0 0.081" quat="0.5 0.5 0.5 0.5" mass="0.43273" diaginertia="0.00039594795 0.00104401581334 0.000775290483338"/>
+                    <joint name="leftarm_wrist_2_joint" type="hinge" pos="0 0 0" axis="0 1 0" range="-1.5707963267948966 1.5707963267948966"/>
+                    <geom type="mesh" mesh="link6_collision" pos="0.0 0.0 0.081" rgba="1 0 0 0.4" euler="1.5707963267948966 0 1.5707963267948966"/>
+                    <geom type="mesh" mesh="link_6" pos="0 0 -0.681" euler="0 0 3.141592653589793" material="grey" contype="0" conaffinity="0" rgba="0.2 0.2 0.2 1"/>
+                    
+                    <!-- Joint at xyz="0.0 0.0 0.123", axis="0 0 1" -->
+                    <body name="leftarm_ee_link" pos="0.0 0.0 0.123">
+                      <inertial pos="0 0 0" mass="0.01" diaginertia="0.0000416666666667 0.0000416666666667 0.0000416666666667"/>
+                      <joint name="leftarm_wrist_3_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-3.141592653589793 3.141592653589793"/>
+                      
+                      <!-- Left Racket -->
+                      <body name="leftarm_cup" pos="0 0 0.12" euler="1.5707963 0 0">
+                        <!-- approximate inertia for the cup assembly -->
+                        <inertial pos="0 0 0.03" mass="0.08" diaginertia="0.0005 0.0005 0.0005"/>
+
+                        <!-- small pole under the cup (for future rope attachment) -->
+                        <geom name="left_cup_pole"
+                              type="cylinder"
+                              pos="0 0 -0.04"
+                              size="0.0075 0.04"
+                              material="wood"/>
+
+                        <!-- bottom of the cup -->
+                        <geom name="left_cup_bottom"
+                              type="cylinder"
+                              pos="0 0 -0.01"
+                              size="0.1 0.05"
+                              material="wood"
+                              rgba="0.4 0.4 0.4 1"/>
+
+                        <site name="left_cup_sensor_site" 
+                              type="cylinder"
+                              pos="0 0 0.02" 
+                              size="0.09 0.01 0.002"
+                              rgba="0.165 0.741 0.894 0.3"/>
+
+                        <geom name="left_cup_sensor_geom" 
+                              type="cylinder"
+                              pos="0 0 0.02" 
+                              size="0.09 0.01 0.002"
+                              rgba="0.165 0.741 0.894 0.3"
+                              mass="0.001"/>
+
+                        <!-- cup side walls (4 thin boxes approximate a round cup) -->
+                        <geom name="left_cup_seg_1" type="box" pos="0.104494 0.010292 0.03"
+                              euler="0 0 0.098175" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_2" type="box" pos="0.100479 0.030480 0.03"
+                              euler="0 0 0.294524" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_3" type="box" pos="0.092602 0.049497 0.03"
+                              euler="0 0 0.490874" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_4" type="box" pos="0.081166 0.066611 0.03"
+                              euler="0 0 0.687223" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_5" type="box" pos="0.066611 0.081166 0.03"
+                              euler="0 0 0.883573" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_6" type="box" pos="0.049497 0.092602 0.03"
+                              euler="0 0 1.079922" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_7" type="box" pos="0.030480 0.100479 0.03"
+                              euler="0 0 1.276272" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_8" type="box" pos="0.010292 0.104494 0.03"
+                              euler="0 0 1.472622" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        
+
+                        <geom name="left_cup_seg_9"  type="box" pos="-0.010292 0.104494 0.03"
+                              euler="0 0 1.668971" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_10" type="box" pos="-0.030480 0.100479 0.03"
+                              euler="0 0 1.865321" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_11" type="box" pos="-0.049497 0.092602 0.03"
+                              euler="0 0 2.061670" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_12" type="box" pos="-0.066611 0.081166 0.03"
+                              euler="0 0 2.258020" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_13" type="box" pos="-0.081166 0.066611 0.03"
+                              euler="0 0 2.454369" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_14" type="box" pos="-0.092602 0.049497 0.03"
+                              euler="0 0 2.650719" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_15" type="box" pos="-0.100479 0.030480 0.03"
+                              euler="0 0 2.847068" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_16" type="box" pos="-0.104494 0.010292 0.03"
+                              euler="0 0 3.043418" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+
+
+                        <geom name="left_cup_seg_17" type="box" pos="-0.104494 -0.010292 0.03"
+                              euler="0 0 3.239767" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_18" type="box" pos="-0.100479 -0.030480 0.03"
+                              euler="0 0 3.436117" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_19" type="box" pos="-0.092602 -0.049497 0.03"
+                              euler="0 0 3.632467" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_20" type="box" pos="-0.081166 -0.066611 0.03"
+                              euler="0 0 3.828816" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_21" type="box" pos="-0.066611 -0.081166 0.03"
+                              euler="0 0 4.025166" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_22" type="box" pos="-0.049497 -0.092602 0.03"
+                              euler="0 0 4.221515" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_23" type="box" pos="-0.030480 -0.100479 0.03"
+                              euler="0 0 4.417865" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_24" type="box" pos="-0.010292 -0.104494 0.03"
+                              euler="0 0 4.614214" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+
+                        <geom name="left_cup_seg_25" type="box" pos="0.010292 -0.104494 0.03"
+                              euler="0 0 4.810564" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_26" type="box" pos="0.030480 -0.100479 0.03"
+                              euler="0 0 5.006913" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_27" type="box" pos="0.049497 -0.092602 0.03"
+                              euler="0 0 5.203263" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_28" type="box" pos="0.066611 -0.081166 0.03"
+                              euler="0 0 5.399612" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_29" type="box" pos="0.081166 -0.066611 0.03"
+                              euler="0 0 5.595962" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_30" type="box" pos="0.092602 -0.049497 0.03"
+                              euler="0 0 5.792311" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_31" type="box" pos="0.100479 -0.030480 0.03"
+                              euler="0 0 5.988661" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                        <geom name="left_cup_seg_32" type="box" pos="0.104494 -0.010292 0.03"
+                              euler="0 0 6.185011" size="0.005 0.010308 0.1" material="wood" rgba="0.165 0.741 0.894 1"/>
+                      
+                        <site name="left_cup_center" 
+                              type="sphere"
+                              pos="0 0 0.13" 
+                              size="0.01"
+                              rgba="0 1 1 0.8"/>
+                        <body name="left_cup_rope_anchor" pos="0 0 -0.03">
+
+                          <body name="left_cup_r0" pos="0 0 -0.02">
+                            <joint name="left_cup_j0" type="ball" damping="0.05" armature="0" limited="false"/>
+                            <geom name="left_cup_s0" type="capsule"
+                                  fromto="0 0 0 0 0 -0.02"
+                                  size="0.005" mass="0.003" rgba="0.867 0.867 0.867 1"/>
+
+                            <body name="left_cup_r1" pos="0 0 -0.02">mass="0.005"
+                              <joint name="left_cup_j1" type="ball" damping="0.05" armature="0" limited="false"/>
+                              <geom name="left_cup_s1" type="capsule"
+                                    fromto="0 0 0 0 0 -0.02"
+                                    size="0.005" mass="0.003" rgba="0 0 0 1"/>
+
+                              <body name="left_cup_r2" pos="0 0 -0.02">
+                                <joint name="left_cup_j2" type="ball" damping="0.05" armature="0" limited="false"/>
+                                <geom name="left_cup_s2" type="capsule"
+                                      fromto="0 0 0 0 0 -0.02"
+                                      size="0.005" mass="0.003" rgba="0.867 0.867 0.867 1"/>
+
+                                <body name="left_cup_r3" pos="0 0 -0.02">
+                                  <joint name="left_cup_j3" type="ball" damping="0.05" armature="0" limited="false"/>
+                                  <geom name="left_cup_s3" type="capsule"
+                                        fromto="0 0 0 0 0 -0.02"
+                                        size="0.005" mass="0.003" rgba="0 0 0 1"/>
+
+                                  <body name="left_cup_r4" pos="0 0 -0.02">
+                                    <joint name="left_cup_j4" type="ball" damping="0.05" armature="0" limited="false"/>
+                                    <geom name="left_cup_s4" type="capsule"
+                                          fromto="0 0 0 0 0 -0.02"
+                                          size="0.005" mass="0.003" rgba="0.867 0.867 0.867 1"/>
+
+                                    <body name="left_cup_r5" pos="0 0 -0.02">
+                                      <joint name="left_cup_j5" type="ball" damping="0.05" armature="0" limited="false"/>
+                                      <geom name="left_cup_s5" type="capsule"
+                                            fromto="0 0 0 0 0 -0.02"
+                                            size="0.005" mass="0.003" rgba="0 0 0 1"/>
+
+                                      <body name="left_cup_r6" pos="0 0 -0.02">
+                                        <joint name="left_cup_j6" type="ball" damping="0.05" armature="0" limited="false"/>
+                                        <geom name="left_cup_s6" type="capsule"
+                                              fromto="0 0 0 0 0 -0.02"
+                                              size="0.005" mass="0.003" rgba="0.867 0.867 0.867 1"/>
+
+                                        <body name="left_cup_r7" pos="0 0 -0.02">
+                                          <joint name="left_cup_j7" type="ball" damping="0.05" armature="0" limited="false"/>
+                                          <geom name="left_cup_s7" type="capsule"
+                                                fromto="0 0 0 0 0 -0.02"
+                                                size="0.005" mass="0.003" rgba="0 0 0 1"/>
+
+                                          <body name="left_cup_r8" pos="0 0 -0.02">
+                                            <joint name="left_cup_j8" type="ball" damping="0.05" armature="0" limited="false"/>
+                                            <geom name="left_cup_s8" type="capsule"
+                                                  fromto="0 0 0 0 0 -0.02"
+                                                  size="0.005" mass="0.003" rgba="0.867 0.867 0.867 1"/>
+
+                                            <body name="left_cup_r9" pos="0 0 -0.02">
+                                              <joint name="left_cup_j9" type="ball" damping="0.05" armature="0" limited="false"/>
+                                              <geom name="left_cup_s9" type="capsule"
+                                                    fromto="0 0 0 0 0 -0.02"
+                                                    size="0.005" mass="0.003" rgba="0 0 0 1"/>
+
+                                              <body name="left_cup_r10" pos="0 0 -0.02">
+                                                <joint name="left_cup_j10" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                <geom name="left_cup_s10" type="capsule"
+                                                      fromto="0 0 0 0 0 -0.02"
+                                                      size="0.005" mass="0.003" rgba="0.867 0.867 0.867 1"/>
+
+                                                <body name="left_cup_r11" pos="0 0 -0.02">
+                                                  <joint name="left_cup_j11" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                  <geom name="left_cup_s11" type="capsule"
+                                                        fromto="0 0 0 0 0 -0.02"
+                                                        size="0.005" mass="0.003" rgba="0 0 0 1"/>
+
+                                                  <body name="left_cup_r12" pos="0 0 -0.02">
+                                                    <joint name="left_cup_j12" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                    <geom name="left_cup_s12" type="capsule"
+                                                          fromto="0 0 0 0 0 -0.02"
+                                                          size="0.005" mass="0.003" rgba="0.867 0.867 0.867 1"/>
+
+                                                    <body  name="left_cup_r13" pos="0 0 -0.02">
+                                                      <joint name="left_cup_j13" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                      <geom name="left_cup_s13" type="capsule"
+                                                            fromto="0 0 0 0 0 -0.02"
+                                                            size="0.005" mass="0.003" rgba="0 0 0 1"/>
+                                                      
+                                                      <body name="left_cup_r14" pos="0 0 -0.02">
+                                                        <joint name="left_cup_j14" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                        <geom name="left_cup_s14" type="capsule"
+                                                              fromto="0 0 0 0 0 -0.02"
+                                                              size="0.005" mass="0.003" rgba="0.867 0.867 0.867 1"/>
+                                                        
+                                                        <body name="left_cup_r15" pos="0 0 -0.02">
+                                                          <joint name="left_cup_j15" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                          <geom name="left_cup_s15" type="capsule"
+                                                                fromto="0 0 0 0 0 -0.02"
+                                                                size="0.005" mass="0.003" rgba="0 0 0 1"/>
+
+                                                          <body name="left_cup_r16" pos="0 0 -0.02">
+                                                            <joint name="left_cup_j16" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                            <geom name="left_cup_s16" type="capsule"
+                                                                  fromto="0 0 0 0 0 -0.02"
+                                                                  size="0.005" mass="0.003" rgba="0.867 0.867 0.867 1"/>
+                                                            <!-- added 15 more links before the left_cup_ball -->
+                                                            <body name="left_cup_r17" pos="0 0 -0.02">
+                                                              <joint name="left_cup_j17" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                              <geom name="left_cup_s17" type="capsule" fromto="0 0 0 0 0 -0.02" size="0.005" mass="0.003" rgba="0 0 0 1"/>
+                                                              <body name="left_cup_r18" pos="0 0 -0.02">
+                                                                <joint name="left_cup_j18" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                <geom name="left_cup_s18" type="capsule" fromto="0 0 0 0 0 -0.02" size="0.005" mass="0.003" rgba="0.867 0.867 0.867 1"/>
+                                                                <body name="left_cup_r19" pos="0 0 -0.02">
+                                                                  <joint name="left_cup_j19" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                  <geom name="left_cup_s19" type="capsule" fromto="0 0 0 0 0 -0.02" size="0.005" mass="0.003" rgba="0 0 0 1"/>
+                                                                  <body name="left_cup_r20" pos="0 0 -0.02">
+                                                                    <joint name="left_cup_j20" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                    <geom name="left_cup_s20" type="capsule" fromto="0 0 0 0 0 -0.02" size="0.005" mass="0.003" rgba="0.867 0.867 0.867 1"/>
+                                                                    <body name="left_cup_r21" pos="0 0 -0.02">
+                                                                      <joint name="left_cup_j21" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                      <geom name="left_cup_s21" type="capsule" fromto="0 0 0 0 0 -0.02" size="0.005" mass="0.003" rgba="0 0 0 1"/>
+                                                                      <body name="left_cup_r22" pos="0 0 -0.02">
+                                                                        <joint name="left_cup_j22" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                        <geom name="left_cup_s22" type="capsule" fromto="0 0 0 0 0 -0.02" size="0.005" mass="0.003" rgba="0.867 0.867 0.867 1"/>
+                                                                        <body name="left_cup_r23" pos="0 0 -0.02">
+                                                                          <joint name="left_cup_j23" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                          <geom name="left_cup_s23" type="capsule" fromto="0 0 0 0 0 -0.02" size="0.005" mass="0.003" rgba="0 0 0 1"/>
+                                                                          <body name="left_cup_r24" pos="0 0 -0.02">
+                                                                            <joint name="left_cup_j24" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                            <geom name="left_cup_s24" type="capsule" fromto="0 0 0 0 0 -0.02" size="0.005" mass="0.003" rgba="0.867 0.867 0.867 1"/>
+                                                                            <body name="left_cup_r25" pos="0 0 -0.02">
+                                                                              <joint name="left_cup_j25" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                              <geom name="left_cup_s25" type="capsule" fromto="0 0 0 0 0 -0.02" size="0.005" mass="0.003" rgba="0 0 0 1"/>
+                                                                              <body name="left_cup_r26" pos="0 0 -0.02">
+                                                                                <joint name="left_cup_j26" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                                <geom name="left_cup_s26" type="capsule" fromto="0 0 0 0 0 -0.02" size="0.005" mass="0.003" rgba="0.867 0.867 0.867 1"/>
+                                                                                <body name="left_cup_r27" pos="0 0 -0.02">
+                                                                                  <joint name="left_cup_j27" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                                  <geom name="left_cup_s27" type="capsule" fromto="0 0 0 0 0 -0.02" size="0.005" mass="0.003" rgba="0 0 0 1"/>
+                                                                                  <body name="left_cup_r28" pos="0 0 -0.02">
+                                                                                    <joint name="left_cup_j28" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                                    <geom name="left_cup_s28" type="capsule" fromto="0 0 0 0 0 -0.02" size="0.005" mass="0.003" rgba="0.867 0.867 0.867 1"/>
+                                                                                    <body name="left_cup_r29" pos="0 0 -0.02">
+                                                                                      <joint name="left_cup_j29" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                                      <geom name="left_cup_s29" type="capsule" fromto="0 0 0 0 0 -0.02" size="0.005" mass="0.003" rgba="0 0 0 1"/>
+                                                                                      <body name="left_cup_r30" pos="0 0 -0.02">
+                                                                                        <joint name="left_cup_j30" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                                        <geom name="left_cup_s30" type="capsule" fromto="0 0 0 0 0 -0.02" size="0.005" mass="0.003" rgba="0.867 0.867 0.867 1"/>
+                                                                                        <body name="left_cup_r31" pos="0 0 -0.02">
+                                                                                          <joint name="left_cup_j31" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                                          <geom name="left_cup_s31" type="capsule" fromto="0 0 0 0 0 -0.02" size="0.005" mass="0.003" rgba="0 0 0 1"/>
+                                                                                          <body name="left_cup_r32" pos="0 0 -0.02">
+                                                                                            <joint name="left_cup_j32" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                                            <geom name="left_cup_s32" type="capsule" fromto="0 0 0 0 0 -0.02" size="0.005" mass="0.003" rgba="0.867 0.867 0.867 1"/>
+                                                                                            <!-- SINGLE ball at the end of the rope -->
+                                                                                            <body name="left_cup_ball" pos="0 0 -0.02" >
+                                                                                              <geom name="left_cup_ball_geom" type="sphere"
+                                                                                                    size="0.04" mass="0.0027"
+                                                                                                    rgba="1 0 1 1"
+                                                                                                    friction="0.7 0.005 0.0001"/>
+                                                                                              <site name="left_cup_ball_site" pos="0 0 0"
+                                                                                                    size="0.005" rgba="1 0 1 1"/>
+                                                                                            </body>
+                                                                                          </body>
+                                                                                        </body>
+                                                                                      </body>
+                                                                                    </body>
+                                                                                  </body>
+                                                                                </body>
+                                                                              </body>
+                                                                            </body>
+                                                                          </body>
+                                                                        </body>
+                                                                      </body>
+                                                                    </body>
+                                                                  </body>
+                                                                </body>
+                                                              </body>
+                                                            </body>
+                                                          </body>
+                                                        </body>
+                                                      </body>
+                                                    </body>
+                                                  </body>
+                                                </body>
+                                              </body>
+                                            </body>
+                                          </body>
+                                        </body>
+                                      </body>
+                                    </body>
+                                  </body>
+                                </body>
+                              </body>
+                            </body>
+                          </body>
+                        </body>
+                        
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+        
+        <!-- RIGHT ARM -->
+        <!-- Origin: pos="0.045 -0.1665 1.526" rpy="1.5707963267948966 -1.5707963267948966 0" -->
+        <!-- RPY to quat: rpy(π/2, -π/2, 0) = quat(0.5, 0.5, -0.5, 0.5) -->
+        <body name="rightarm_shoulder_link" pos="0.045 -0.1665 1.526" quat="0.5 0.5 -0.5 0.5">
+          <inertial pos="0.00023 0.00000 0.06223" mass="0.85644" diaginertia="0.00134118504 0.00134118504 0.00041622984"/>
+          <geom type="box" size="0.027 0.027 0.063" pos="0 0 0.063" rgba="1 0.5 0 0.4" euler="0 0 3.141592653589793"/>
+          <geom type="mesh" mesh="link_1" euler="0 0 3.141592653589793" material="grey" contype="0" conaffinity="0" rgba="0.2 0.2 0.2 1"/>
+          
+          <!-- Joint at xyz="0 0 0.126", axis="0 0 -1" -->
+          <body name="rightarm_upper_arm_link" pos="0 0 0.126">
+            <inertial pos="0.00000 0.00080 0.03183" mass="0.94658" diaginertia="0.00183005466667 0.000567948 0.00183005466667"/>
+            <joint name="rightarm_shoulder_pan_joint" type="hinge" pos="0 0 0" axis="0 0 -1" range="0 3.141592653589793"/>
+            <geom type="box" size="0.03 0.07 0.03" pos="0 0 0.03" rgba="1 0.5 0 0.4" euler="0 0 3.141592653589793"/>
+            <geom type="mesh" mesh="link_2" pos="0 0 -0.126" euler="0 0 3.141592653589793" material="grey" contype="0" conaffinity="0" rgba="0.2 0.2 0.2 1" />
+            
+            <body name="rightarm_forearm_link" pos="0 0 0.033">
+              <inertial pos="0 0 0.148" mass="1.30260" diaginertia="0.0136625102365 0.0124082569044 0.00324753226791"/>
+              <joint name="rightarm_shoulder_lift_joint" type="hinge" pos="0 0 0" axis="0 1 0" range="-1.7803405567893358 1.7803405567893358"/>
+              <geom type="mesh" mesh="link3_collision" pos="-.001 0 0.148" rgba="1 0.5 0 0.4" euler="-1.5707963267948966 0 3.141592653589793"/>
+              <geom type="mesh" mesh="link_3" pos="0 0 -0.159" euler="0 0 3.141592653589793" material="grey" contype="0" conaffinity="0" rgba="0.2 0.2 0.2 1" />
+              
+              <body name="rightarm_wrist_1_link" pos="0.03 0.0 0.264" euler="0 0.7853981633974483 0">
+                <inertial pos="-0.03 0 0.1285" quat="0.707107 0 0.707107 0" mass="1.15977" diaginertia="0.00205032491251 0.00691847164616 0.00765159473365"/>
+                <joint name="rightarm_elbow_joint" type="hinge" pos="0 0 0" axis="0 1 0" range="-1.2566370614359172 2.261946710584651"/>
+                <geom type="mesh" mesh="link4_collision" pos="-0.03 0.0 0.1285" rgba="1 0.5 0 0.4" euler="1.5707963267948966 0 3.141592653589793"/>
+                <geom type="mesh" mesh="link_4" pos="-0.03 0 -0.423" euler="0 0 3.141592653589793" material="grey" contype="0" conaffinity="0" rgba="0.2 0.2 0.2 1" />
+                
+                <body name="rightarm_wrist_2_link" pos="-0.03 0.0 0.231">
+                  <inertial pos="0 0 0.024" mass="0.44688" diaginertia="0.00038744496 0.00017160192 0.00038744496"/>
+                  <joint name="rightarm_wrist_1_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-3.141592653589793 3.141592653589793"/>
+                  <geom type="box" size="0.024 0.045 0.024" pos="0.0 0.0 0.024" rgba="1 0.5 0 0.4" euler="0 0 3.141592653589793"/>
+                  <geom type="mesh" mesh="link_5" pos="0 0 -0.654" euler="0 0 3.141592653589793" material="grey" contype="0" conaffinity="0" rgba="0.2 0.2 0.2 1" />
+                  
+                  <body name="rightarm_wrist_3_link" pos="0.0 0.0 0.027">
+                    <inertial pos="0 0 0.081" quat="0.5 0.5 0.5 0.5" mass="0.43273" diaginertia="0.00039594795 0.00104401581334 0.000775290483338"/>
+                    <joint name="rightarm_wrist_2_joint" type="hinge" pos="0 0 0" axis="0 1 0" range="-1.5707963267948966 1.5707963267948966"/>
+                    <geom type="mesh" mesh="link6_collision" pos="0.0 0.0 0.081" rgba="1 0.5 0 0.4" euler="1.5707963267948966 0 1.5707963267948966"/>
+                    <geom type="mesh" mesh="link_6" pos="0 0 -0.681" euler="0 0 3.141592653589793" material="grey" contype="0" conaffinity="0"rgba="0.2 0.2 0.2 1" />
+                    
+                    <body name="rightarm_ee_link" pos="0.0 0.0 0.123">
+                      <inertial pos="0 0 0" mass="0.01" diaginertia="0.0000416666666667 0.0000416666666667 0.0000416666666667"/>
+                      <joint name="rightarm_wrist_3_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-3.141592653589793 3.141592653589793"/>
+                      
+                        
+                        <body name="rightarm_cup" pos="0 0 0.12" euler="1.5707963 0 0">
+                        <!-- approximate inertia for the cup assembly -->
+                        <inertial pos="0 0 -0.03" mass="0.08" diaginertia="0.0005 0.0005 0.0005"/>
+
+                        <!-- small pole under the cup (for future rope attachment) -->
+                        <geom name="right_cup_pole"
+                              type="cylinder"
+                              pos="0 0 0.04"
+                              size="0.0075 0.04"
+                              material="wood"/>
+
+                        <!-- bottom of the cup -->
+                        <geom name="right_cup_bottom"
+                              type="cylinder"
+                              pos="0 0 0.01"
+                              size="0.1 0.05"
+                              material="wood"
+                              rgba="0.4 0.4 0.4 1"/>
+
+                        <site name="right_cup_sensor_site" 
+                              type="cylinder"
+                              pos="0 0 -0.02" 
+                              size="0.09 0.01 0.002"
+                              rgba="1.0 0.5 0.0 0.3"/>
+
+                        <geom name="right_cup_sensor_geom" 
+                              type="cylinder"
+                              pos="0 0 -0.02" 
+                              size="0.09 0.01 0.002"
+                              rgba="1.0 0.5 0.0 0.3"
+                              mass="0.001"/>
+
+                        <!-- cup side walls (32 segments approximate a round cup) -->
+                        <geom name="right_cup_seg_1" type="box" pos="0.104494 0.010292 -0.03"
+                              euler="0 0 0.098175" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_2" type="box" pos="0.100479 0.030480 -0.03"
+                              euler="0 0 0.294524" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_3" type="box" pos="0.092602 0.049497 -0.03"
+                              euler="0 0 0.490874" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_4" type="box" pos="0.081166 0.066611 -0.03"
+                              euler="0 0 0.687223" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_5" type="box" pos="0.066611 0.081166 -0.03"
+                              euler="0 0 0.883573" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_6" type="box" pos="0.049497 0.092602 -0.03"
+                              euler="0 0 1.079922" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_7" type="box" pos="0.030480 0.100479 -0.03"
+                              euler="0 0 1.276272" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_8" type="box" pos="0.010292 0.104494 -0.03"
+                              euler="0 0 1.472622" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+
+                        <geom name="right_cup_seg_9"  type="box" pos="-0.010292 0.104494 -0.03"
+                              euler="0 0 1.668971" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_10" type="box" pos="-0.030480 0.100479 -0.03"
+                              euler="0 0 1.865321" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_11" type="box" pos="-0.049497 0.092602 -0.03"
+                              euler="0 0 2.061670" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_12" type="box" pos="-0.066611 0.081166 -0.03"
+                              euler="0 0 2.258020" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_13" type="box" pos="-0.081166 0.066611 -0.03"
+                              euler="0 0 2.454369" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_14" type="box" pos="-0.092602 0.049497 -0.03"
+                              euler="0 0 2.650719" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_15" type="box" pos="-0.100479 0.030480 -0.03"
+                              euler="0 0 2.847068" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_16" type="box" pos="-0.104494 0.010292 -0.03"
+                              euler="0 0 3.043418" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+
+                        <geom name="right_cup_seg_17" type="box" pos="-0.104494 -0.010292 -0.03"
+                              euler="0 0 3.239767" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_18" type="box" pos="-0.100479 -0.030480 -0.03"
+                              euler="0 0 3.436117" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_19" type="box" pos="-0.092602 -0.049497 -0.03"
+                              euler="0 0 3.632467" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_20" type="box" pos="-0.081166 -0.066611 -0.03"
+                              euler="0 0 3.828816" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_21" type="box" pos="-0.066611 -0.081166 -0.03"
+                              euler="0 0 4.025166" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_22" type="box" pos="-0.049497 -0.092602 -0.03"
+                              euler="0 0 4.221515" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_23" type="box" pos="-0.030480 -0.100479 -0.03"
+                              euler="0 0 4.417865" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_24" type="box" pos="-0.010292 -0.104494 -0.03"
+                              euler="0 0 4.614214" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+
+                        <geom name="right_cup_seg_25" type="box" pos="0.010292 -0.104494 -0.03"
+                              euler="0 0 4.810564" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_26" type="box" pos="0.030480 -0.100479 -0.03"
+                              euler="0 0 5.006913" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_27" type="box" pos="0.049497 -0.092602 -0.03"
+                              euler="0 0 5.203263" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_28" type="box" pos="0.066611 -0.081166 -0.03"
+                              euler="0 0 5.399612" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_29" type="box" pos="0.081166 -0.066611 -0.03"
+                              euler="0 0 5.595962" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_30" type="box" pos="0.092602 -0.049497 -0.03"
+                              euler="0 0 5.792311" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_31" type="box" pos="0.100479 -0.030480 -0.03"
+                              euler="0 0 5.988661" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+                        <geom name="right_cup_seg_32" type="box" pos="0.104494 -0.010292 -0.03"
+                              euler="0 0 6.185011" size="0.005 0.010308 0.1" material="wood" rgba="1.0 0.5 0.0 1"/>
+
+                        
+
+                        <!-- <body name="right_cup_rope_anchor" pos="0 0 0.05">
+
+                          <body name="right_cup_r0" pos="0 0 0.02">
+                            <joint name="right_cup_j0" type="ball" damping="0.05" armature="0" limited="false"/>
+                            <geom name="right_cup_s0" type="capsule"
+                                  fromto="0 0 0 0 0 0.02"
+                                  size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+
+                            <body name="right_cup_r1" pos="0 0 0.02">
+                              <joint name="right_cup_j1" type="ball" damping="0.05" armature="0" limited="false"/>
+                              <geom name="right_cup_s1" type="capsule"
+                                    fromto="0 0 0 0 0 0.02"
+                                    size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+
+                              <body name="right_cup_r2" pos="0 0 0.02">
+                                <joint name="right_cup_j2" type="ball" damping="0.05" armature="0" limited="false"/>
+                                <geom name="right_cup_s2" type="capsule"
+                                      fromto="0 0 0 0 0 0.02"
+                                      size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+
+                                <body name="right_cup_r3" pos="0 0 0.02">
+                                  <joint name="right_cup_j3" type="ball" damping="0.05" armature="0" limited="false"/>
+                                  <geom name="right_cup_s3" type="capsule"
+                                        fromto="0 0 0 0 0 0.02"
+                                        size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+
+                                  <body name="right_cup_r4" pos="0 0 0.02">
+                                    <joint name="right_cup_j4" type="ball" damping="0.05" armature="0" limited="false"/>
+                                    <geom name="right_cup_s4" type="capsule"
+                                          fromto="0 0 0 0 0 0.02"
+                                          size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+
+                                    <body name="right_cup_r5" pos="0 0 0.02">
+                                      <joint name="right_cup_j5" type="ball" damping="0.05" armature="0" limited="false"/>
+                                      <geom name="right_cup_s5" type="capsule"
+                                            fromto="0 0 0 0 0 0.02"
+                                            size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+
+                                      <body name="right_cup_r6" pos="0 0 0.02">
+                                        <joint name="right_cup_j6" type="ball" damping="0.05" armature="0" limited="false"/>
+                                        <geom name="right_cup_s6" type="capsule"
+                                              fromto="0 0 0 0 0 0.02"
+                                              size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+
+                                        <body name="right_cup_r7" pos="0 0 0.02">
+                                          <joint name="right_cup_j7" type="ball" damping="0.05" armature="0" limited="false"/>
+                                          <geom name="right_cup_s7" type="capsule"
+                                                fromto="0 0 0 0 0 0.02"
+                                                size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+
+                                          <body name="right_cup_r8" pos="0 0 0.02">
+                                            <joint name="right_cup_j8" type="ball" damping="0.05" armature="0" limited="false"/>
+                                            <geom name="right_cup_s8" type="capsule"
+                                                  fromto="0 0 0 0 0 0.02"
+                                                  size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+
+                                            <body name="right_cup_r9" pos="0 0 0.02">
+                                              <joint name="right_cup_j9" type="ball" damping="0.05" armature="0" limited="false"/>
+                                              <geom name="right_cup_s9" type="capsule"
+                                                    fromto="0 0 0 0 0 0.02"
+                                                    size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+
+                                              <body name="right_cup_r10" pos="0 0 0.02">
+                                                <joint name="right_cup_j10" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                <geom name="right_cup_s10" type="capsule"
+                                                      fromto="0 0 0 0 0 0.02"
+                                                      size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+
+                                                <body name="right_cup_r11" pos="0 0 0.02">
+                                                  <joint name="right_cup_j11" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                  <geom name="right_cup_s11" type="capsule"
+                                                        fromto="0 0 0 0 0 0.02"
+                                                        size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+
+                                                  <body name="right_cup_r12" pos="0 0 0.02">
+                                                    <joint name="right_cup_j12" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                    <geom name="right_cup_s12" type="capsule"
+                                                          fromto="0 0 0 0 0 0.02"
+                                                          size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+
+                                                    <body  name="right_cup_r13" pos="0 0 0.02">
+                                                      <joint name="right_cup_j13" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                      <geom name="right_cup_s13" type="capsule"
+                                                            fromto="0 0 0 0 0 0.02"
+                                                            size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+                                                      
+                                                      <body name="right_cup_r14" pos="0 0 0.02">
+                                                        <joint name="right_cup_j14" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                        <geom name="right_cup_s14" type="capsule"
+                                                              fromto="0 0 0 0 0 0.02"
+                                                              size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+                                                        
+                                                        <body name="right_cup_r15" pos="0 0 0.02">
+                                                          <joint name="right_cup_j15" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                          <geom name="right_cup_s15" type="capsule"
+                                                                fromto="0 0 0 0 0 0.02"
+                                                                size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+
+                                                          <body name="right_cup_r16" pos="0 0 0.02">
+                                                            <joint name="right_cup_j16" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                            <geom name="right_cup_s16" type="capsule"
+                                                                  fromto="0 0 0 0 0 0.02"
+                                                                  size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+                                                            <body name="right_cup_r17" pos="0 0 0.02">
+                                                              <joint name="right_cup_j17" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                              <geom name="right_cup_s17" type="capsule" fromto="0 0 0 0 0 0.02" size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+                                                              <body name="right_cup_r18" pos="0 0 0.02">
+                                                                <joint name="right_cup_j18" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                <geom name="right_cup_s18" type="capsule" fromto="0 0 0 0 0 0.02" size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+                                                                <body name="right_cup_r19" pos="0 0 0.02">
+                                                                  <joint name="right_cup_j19" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                  <geom name="right_cup_s19" type="capsule" fromto="0 0 0 0 0 0.02" size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+                                                                  <body name="right_cup_r20" pos="0 0 0.02">
+                                                                    <joint name="right_cup_j20" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                    <geom name="right_cup_s20" type="capsule" fromto="0 0 0 0 0 0.02" size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+                                                                    <body name="right_cup_r21" pos="0 0 0.02">
+                                                                      <joint name="right_cup_j21" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                      <geom name="right_cup_s21" type="capsule" fromto="0 0 0 0 0 0.02" size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+                                                                      <body name="right_cup_r22" pos="0 0 0.02">
+                                                                        <joint name="right_cup_j22" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                        <geom name="right_cup_s22" type="capsule" fromto="0 0 0 0 0 0.02" size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+                                                                        <body name="right_cup_r23" pos="0 0 0.02">
+                                                                          <joint name="right_cup_j23" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                          <geom name="right_cup_s23" type="capsule" fromto="0 0 0 0 0 0.02" size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+                                                                          <body name="right_cup_r24" pos="0 0 0.02">
+                                                                            <joint name="right_cup_j24" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                            <geom name="right_cup_s24" type="capsule" fromto="0 0 0 0 0 0.02" size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+                                                                            <body name="right_cup_r25" pos="0 0 0.02">
+                                                                              <joint name="right_cup_j25" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                              <geom name="right_cup_s25" type="capsule" fromto="0 0 0 0 0 0.02" size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+                                                                              <body name="right_cup_r26" pos="0 0 0.02">
+                                                                                <joint name="right_cup_j26" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                                <geom name="right_cup_s26" type="capsule" fromto="0 0 0 0 0 0.02" size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+                                                                                <body name="right_cup_r27" pos="0 0 0.02">
+                                                                                  <joint name="right_cup_j27" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                                  <geom name="right_cup_s27" type="capsule" fromto="0 0 0 0 0 0.02" size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+                                                                                  <body name="right_cup_r28" pos="0 0 0.02">
+                                                                                    <joint name="right_cup_j28" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                                    <geom name="right_cup_s28" type="capsule" fromto="0 0 0 0 0 0.02" size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+                                                                                    <body name="right_cup_r29" pos="0 0 0.02">
+                                                                                      <joint name="right_cup_j29" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                                      <geom name="right_cup_s29" type="capsule" fromto="0 0 0 0 0 0.02" size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+                                                                                      <body name="right_cup_r30" pos="0 0 0.02">
+                                                                                        <joint name="right_cup_j30" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                                        <geom name="right_cup_s30" type="capsule" fromto="0 0 0 0 0 0.02" size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+                                                                                        <body name="right_cup_r31" pos="0 0 0.02">
+                                                                                          <joint name="right_cup_j31" type="ball" damping="0.05" armature="0" limited="false"/>
+                                                                                          <geom name="right_cup_s31" type="capsule" fromto="0 0 0 0 0 0.02" size="0.005" mass="0.003" rgba="0.6 0.4 0.2 1"/>
+                                                                                          <body name="right_cup_ball" pos="0 0 0.02">
+                                                                                            <geom name="right_cup_ball_geom" type="sphere"
+                                                                                                  size="0.04" mass="0.05"
+                                                                                                  rgba="1 0.5 0 1"
+                                                                                                  friction="0.7 0.005 0.0001"/>
+                                                                                            <site name="right_cup_ball_site" pos="0 0 0"
+                                                                                                  size="0.005" rgba="0 1 0 0.3"/>
+                                                                                          </body>
+                                                                                        </body>
+                                                                                      </body>
+                                                                                    </body>
+                                                                                  </body>
+                                                                                </body>
+                                                                              </body>
+                                                                            </body>
+                                                                          </body>
+                                                                        </body>
+                                                                      </body>
+                                                                    </body>
+                                                                  </body>
+                                                                </body>
+                                                              </body>
+                                                            </body>
+                                                          </body>
+                                                        </body>
+                                                      </body>
+                                                    </body>
+                                                  </body>
+                                                </body>
+                                              </body>
+                                            </body>
+                                          </body>
+                                        </body>
+                                      </body>
+                                    </body>
+                                  </body>
+                                </body>
+                              </body>
+                            </body>
+                          </body>  
+                        </body> -->
+                      </body> 
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  
+  <actuator>
+    <!-- Left arm actuators - Position servos with PD control -->
+    <position name="leftarm_shoulder_pan_motor" joint="leftarm_shoulder_pan_joint" 
+              ctrlrange="-3.141592653589793 0" kp="200" kv="20" gear="1"/>
+    <position name="leftarm_shoulder_lift_motor" joint="leftarm_shoulder_lift_joint" 
+              ctrlrange="-1.7803405567893358 1.7803405567893358" kp="200" kv="20" gear="1"/>
+    <position name="leftarm_elbow_motor" joint="leftarm_elbow_joint" 
+              ctrlrange="-1.2566370614359172 2.261946710584651" kp="150" kv="15" gear="1"/>
+    <position name="leftarm_wrist_1_motor" joint="leftarm_wrist_1_joint" 
+              ctrlrange="-3.141592653589793 3.141592653589793" kp="100" kv="10" gear="1"/>
+    <position name="leftarm_wrist_2_motor" joint="leftarm_wrist_2_joint" 
+              ctrlrange="-1.5707963267948966 1.5707963267948966" kp="100" kv="10" gear="1"/>
+    <position name="leftarm_wrist_3_motor" joint="leftarm_wrist_3_joint" 
+              ctrlrange="-3.141592653589793 3.141592653589793" kp="100" kv="10" gear="1"/>
+    
+    <!-- Right arm actuators - Position servos with PD control -->
+    <position name="rightarm_shoulder_pan_motor" joint="rightarm_shoulder_pan_joint" 
+              ctrlrange="0 3.141592653589793" kp="200" kv="20" gear="1"/>
+    <position name="rightarm_shoulder_lift_motor" joint="rightarm_shoulder_lift_joint" 
+              ctrlrange="-1.7803405567893358 1.7803405567893358" kp="200" kv="20" gear="1"/>
+    <position name="rightarm_elbow_motor" joint="rightarm_elbow_joint" 
+              ctrlrange="-1.2566370614359172 2.261946710584651" kp="150" kv="15" gear="1"/>
+    <position name="rightarm_wrist_1_motor" joint="rightarm_wrist_1_joint" 
+              ctrlrange="-3.141592653589793 3.141592653589793" kp="100" kv="10" gear="1"/>
+    <position name="rightarm_wrist_2_motor" joint="rightarm_wrist_2_joint" 
+              ctrlrange="-1.5707963267948966 1.5707963267948966" kp="100" kv="10" gear="1"/>
+    <position name="rightarm_wrist_3_motor" joint="rightarm_wrist_3_joint" 
+              ctrlrange="-3.141592653589793 3.141592653589793" kp="100" kv="10" gear="1"/>
+  </actuator>
+  
+  <sensor>
+    <!-- Left arm joint sensors -->
+    <jointpos name="leftarm_shoulder_pan_pos" joint="leftarm_shoulder_pan_joint"/>
+    <jointvel name="leftarm_shoulder_pan_vel" joint="leftarm_shoulder_pan_joint"/>
+    <jointpos name="leftarm_shoulder_lift_pos" joint="leftarm_shoulder_lift_joint"/>
+    <jointvel name="leftarm_shoulder_lift_vel" joint="leftarm_shoulder_lift_joint"/>
+    <jointpos name="leftarm_elbow_pos" joint="leftarm_elbow_joint"/>
+    <jointvel name="leftarm_elbow_vel" joint="leftarm_elbow_joint"/>
+    <jointpos name="leftarm_wrist_1_pos" joint="leftarm_wrist_1_joint"/>
+    <jointvel name="leftarm_wrist_1_vel" joint="leftarm_wrist_1_joint"/>
+    <jointpos name="leftarm_wrist_2_pos" joint="leftarm_wrist_2_joint"/>
+    <jointvel name="leftarm_wrist_2_vel" joint="leftarm_wrist_2_joint"/>
+    <jointpos name="leftarm_wrist_3_pos" joint="leftarm_wrist_3_joint"/>
+    <jointvel name="leftarm_wrist_3_vel" joint="leftarm_wrist_3_joint"/>
+    
+    <!-- Right arm joint sensors -->
+    <jointpos name="rightarm_shoulder_pan_pos" joint="rightarm_shoulder_pan_joint"/>
+    <jointvel name="rightarm_shoulder_pan_vel" joint="rightarm_shoulder_pan_joint"/>
+    <jointpos name="rightarm_shoulder_lift_pos" joint="rightarm_shoulder_lift_joint"/>
+    <jointvel name="rightarm_shoulder_lift_vel" joint="rightarm_shoulder_lift_joint"/>
+    <jointpos name="rightarm_elbow_pos" joint="rightarm_elbow_joint"/>
+    <jointvel name="rightarm_elbow_vel" joint="rightarm_elbow_joint"/>
+    <jointpos name="rightarm_wrist_1_pos" joint="rightarm_wrist_1_joint"/>
+    <jointvel name="rightarm_wrist_1_vel" joint="rightarm_wrist_1_joint"/>
+    <jointpos name="rightarm_wrist_2_pos" joint="rightarm_wrist_2_joint"/>
+    <jointvel name="rightarm_wrist_2_vel" joint="rightarm_wrist_2_joint"/>
+    <jointpos name="rightarm_wrist_3_pos" joint="rightarm_wrist_3_joint"/>
+    <jointvel name="rightarm_wrist_3_vel" joint="rightarm_wrist_3_joint"/>
+    <framepos name="left_ball_pos" objtype="site" objname="left_cup_ball_site"/>
+    <!-- <framepos name="right_ball_pos" objtype="site" objname="right_cup_ball_site"/> -->
+    <touch name="left_cup_lid_touch" site="left_cup_sensor_site"/>
+    <!-- <touch name="right_cup_lid_touch" site="right_cup_lid_site"/> -->
+
+  </sensor>
+
+</mujoco>

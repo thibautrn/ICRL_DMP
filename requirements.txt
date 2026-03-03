@@ -1,0 +1,20 @@
+## Minimal, ROS-free requirements for this repository
+## (the previous file was a full environment freeze with many ROS2 packages)
+
+# Core simulation / viewer
+mujoco>=3.3.0
+glfw>=2.6
+PyOpenGL>=3.1
+
+# Numeric + optimization
+numpy>=1.24
+scipy>=1.10
+
+# Plotting / analysis
+matplotlib>=3.7
+
+# Pinocchio IK (provides `import pinocchio`)
+pin>=3.0
+
+# Optional: ICL script (Gemini)
+#google-generativeai>=0.8absl-py==2.3.1
