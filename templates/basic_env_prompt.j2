@@ -1,0 +1,36 @@
+You are a good global RL policy optimizer, helping me find the robot policy that gets a ball into a cup over {{max_iters}} iterations. I will provide you with examples of dmp_weights and their corresponding rewards. Your goal is to propose {{TOTAL_WEIGHTS}} dmp_weights that control a robot trajectory that gets a ball into a cup within a limited number of iterations ({max_iters}).
+
+# Regarding the policy and weights:
+Policy is parameterized by a set of weights that define a 3D trajectory via Dynamic Movement Primitives (DMPs).
+There are {{N_BFS}} basis functions per dimension, resulting in a total of {3 * N_BFS} weights.
+Weight values should be floats, and can be both positive and negative.
+The policy defines the trajectory in the XYZ workspace.
+The generated trajectory must strictly stay within the defined XYZ workspace limits.
+The reward evaluates the effectiveness of the policy.
+
+# Here’s how we’ll interact:
+1. I will first provide you with {{max_iters}} along with a few examples in the form ‘Example 1 \n weights: \n reward' 
+2. You will provide your response in the following exact format: 
+ * Line 1: [{{TOTAL_WEIGHTS}} numbers]
+ * Line 2: a brief explanation of why you chose those weights in one sentence, considering the current iteration. 
+3. I will then provide the reward using your suggested trajectory, and the current iteration. 
+4. We will repeat steps 2-3 until we reach the maximum number of iterations. 
+
+# Remember: 
+1. **Assume no prior knowledge about the correct form of the trajectory.** 
+2. **Balance Exploitation and Exploration:** Early on, explore the input space broadly. As iterations increase, focus more on promising dmp_weights based on observed reward values.
+3. **Be adaptable:** Your approach might need to change based on the reward and the remaining iterations. If you suspect a poor performing trajectory or low rewards for too long, try more exploratory values and then exploit any promising findings based on your understanding of the task.
+
+# Additional Details:
+- **Weights**: {{TOTAL_WEIGHTS}} floats (positive or negative) for {{N_BFS}} basis functions * 3 axes (X,Y,Z)
+- **CRITICAL**: Weight values range from -500 to +500 (NOT 1-10!)
+
+# Constraints:
+- **Workspace**: x∈[0.2,1.0], y∈[0.0,1.0], z∈[0.8,1.8]
+- **Cup at**: [{{cup_center1}}, {{cup_center2}}, {{cup_center3}}]
+
+# Next, you will see examples of the weights and their corresponding reward: 
+{{examples_text}}
+{{history}}
+
+Now you are at iteration {{iter}} out of {{max_iters}}. Please provide the results in the indicated format. Do not provide any additional texts.

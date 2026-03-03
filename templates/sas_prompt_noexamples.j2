@@ -1,0 +1,39 @@
+# Domain Description:
+The robot is a bimanual manipulation system tasked with placing a ball inside a cup. The cup is attached to the left arm of the robot. The ball is attached by a string to the bottom of the cup, and the robot must swing its left arm along one smooth trajectory that guides the ball into the cup.
+Cup location: [{{cup_center1}}, {{cup_center2}}, {{cup_center3}}]
+
+# Objective:
+You are helping me find the robot policy over {{max_iters}} iterations. I will provide you with previously predicted dmp_weights and their corresponding rewards. Your goal is to propose {{TOTAL_WEIGHTS}} dmp_weights that control a robot trajectory within a limited number of iterations {{max_iters}}. I will provide you with the environment description and reward structure, along with the urdf file.
+
+# URDF
+{{URDF_FILE}}
+
+Step 1: Create a table with the previous predicted weights and corresponding rewards, noting which weights would create one smooth trajectory that would allow the ball to land in the cup
+Step 2: From the table, give me the new weights that are closest to fulfilling the objective.
+Step 3: Take these weights and the summary table and analyze the directional trends of the parameters. Let's think step by step!
+Step 4: Determine how increasing or decreasing the weights would affect the trajectory and reward.
+Step 5: Based on this analysis, propose a new set of {{3 * N_BFS}} weights which will bring us to a trajectory that achieves the objective better than any of the previous examples.
+Step 6: You will provide your response in the following exact format: 
+ * Line 1: [{{TOTAL_WEIGHTS}} dmp weight values (float)]
+ * Line 2: a brief explanation of why you chose those weights in one sentence, considering the current iteration. 
+
+# Notes:
+* Policy is parameterized by a set of weights that define a 3D trajectory via Dynamic Movement Primitives.
+* There are {{N_BFS}} basis functions per dimension, resulting in a total of {{3 * N_BFS}} weights.
+* Weight values should be floats, and can be both positive and negative.
+* The trajectory should not cause the robot to self collide.
+* The policy defines the trajectory in the XYZ workspace.
+* The generated trajectory must strictly stay within the defined XYZ workspace limits.
+* The reward evaluates the effectiveness of the policy.
+
+# Additional Details:
+- **Weights**: {{TOTAL_WEIGHTS}} floats (positive or negative) for {{N_BFS}} basis functions * 3 axes (X,Y,Z)
+- **CRITICAL**: Weight values range from -500 to +500 and SHOULD NOT BE BETWEEN 1 and 10
+
+# Constraints:
+- **Workspace**: x∈[0.2,1.0], y∈[0.0,1.0], z∈[0.8,1.8]
+
+# History:
+{{history}}
+
+Now you are at iteration {{iter}} out of {{max_iters}}. Please provide the results in the indicated format by following the steps. Do not provide any additional texts.
